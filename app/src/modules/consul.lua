@@ -93,8 +93,8 @@ function _M.init(config)
         return false
     end
     for _, key in ipairs(upstream_keys) do repeat
-        local skey = '/'..str_sub(key, #key_prefix + 11)
-        --local skey = str_sub(key, #key_prefix + 11)
+        --local skey = '/'..str_sub(key, #key_prefix + 11)
+        local skey = str_sub(key, #key_prefix + 11)
         if #skey == 0 then
             break
         end

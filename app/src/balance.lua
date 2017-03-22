@@ -10,6 +10,8 @@ local set_more_tries = balancer.set_more_tries
 
 --local skey = ngx.var.host
 local skey = ngx.var.uri
+skey = string.gsub(skey, '/', '-')
+skey = string.sub(skey, 2)
 --local skey = ngx.ctx.upstream_name
 if not skey then
     return

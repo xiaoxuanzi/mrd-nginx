@@ -55,7 +55,8 @@ if request_uri == "/status" then
 else
     local m = ngx_match(request_uri, "^/upstream/([-_a-zA-Z0-9\\.]+)$", "jo")
     if m then
-        local skey = '/'..m[1]
+        --local skey = '/'..m[1]
+        local skey = m[1]
 
         local status, err
         local method = get_method()

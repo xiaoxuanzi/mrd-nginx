@@ -6,7 +6,7 @@ local balancer  = require "ngx.balancer"
 local get_last_failure = balancer.get_last_failure
 local set_current_peer = balancer.set_current_peer
 local set_more_tries = balancer.set_more_tries
-
+local set_timeouts = balancer.set_timeouts
 
 --local skey = ngx.var.host
 local skey = ngx.var.uri
@@ -35,6 +35,14 @@ ngx.ctx.last_peer = peer
 ok, err = set_current_peer(peer.host, peer.port)
 if not ok then
     ngx.log(ngx.ERR, "set_current_peer failed, ", err)
+    return
+end
+
+local connect_timeout, send_timeout, read_timeout
+connect_timeout, send_timeout, read_timeout = checkups.get_ups_timeout(skey)
+ok, err = set_timeouts(connect_timeout, send_timeout, read_timeout)
+if not ok then
+    ngx.log(ngx.ERR, "set_timeouts failed, ", err)
     return
 end
 

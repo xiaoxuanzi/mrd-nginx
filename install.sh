@@ -73,7 +73,7 @@ install_checkups()
         err "cp checkups"
     fi
 
-    ok "install openresty sucessfully!!!"
+    ok "install mrd nginx lua  sucessfully!!!"
 }
 
 install()

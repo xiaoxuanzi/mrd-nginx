@@ -1,5 +1,5 @@
 #!/bin/bash
-LOG_FILE='/var/log/mrd_dynamic-upstream-nginx-install.log'
+LOG_FILE='/var/log/mrd-nginx-lua-install.log'
 
 ok()
 {

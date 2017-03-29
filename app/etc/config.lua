@@ -38,7 +38,7 @@ _M.consul = {
 
     -- consul k/v prefix.
     -- Slardar will read upstream list from config/slardar/upstreams.
-    config_key_prefix = "config/nginx/",
+    config_key_prefix = "config/service1/",
 
     -- positive cache ttl(in seconds) for dynamic configurations from consul.
     config_positive_ttl = 10,

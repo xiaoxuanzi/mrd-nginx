@@ -313,7 +313,7 @@ local heartbeat = {
 
             --local status = tonumber(str_sub(status_line, from, to))
             local status = str_sub(status_line, from, to)
-            if statuses[status] ~= true then
+            if statuses[status] ~= "true" then
                 return _M.STATUS_ERR, "bad status code"
             end
         end

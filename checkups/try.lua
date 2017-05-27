@@ -22,6 +22,26 @@ local NEED_RETRY       = 0
 local REQUEST_SUCCESS  = 1
 local EXCESS_TRY_LIMIT = 2
 
+local function extract_hash_value( hash_keys)
+    local hash_value
+    local uri_args = ngx.req.get_uri_args()
+
+    for _, v in pairs(hash_keys) do
+        local hvalue = uri_args[v]
+        if type(hvalue) == "table" then
+            hvalue = table.concat(hvalue, "")
+        end
+
+        if not hash_value then
+            hash_value = hvalue
+        else
+            hash_value = hash_value .. hvalue
+        end
+    end
+
+    return hash_value
+
+end
 
 local function prepare_callbacks(skey, opts)
     local ups = base.upstream.checkups[skey]
@@ -66,7 +86,11 @@ local function prepare_callbacks(skey, opts)
     local key
     if mode ~= nil then
         if mode == "hash" then
-            key = opts.hash_key or ngx.var.uri
+            if ups.hash_key then
+                key = extract_hash_value( ups.hash_key )
+            else
+                key = ngx.var.uri
+            end
         elseif mode == "url_hash" then
             key = ngx.var.uri
         elseif mode == "ip_hash" then

@@ -311,7 +311,8 @@ local heartbeat = {
             end
 
             local status = str_sub(status_line, from, to)
-            if statuses[status] == false then
+            --if statuses[status] == false then
+            if statuses[status] ~= "true" then
                 return _M.STATUS_ERR, "bad status code"
             end
         end

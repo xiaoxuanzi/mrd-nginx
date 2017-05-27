@@ -21,8 +21,7 @@ local tcp           = ngx.socket.tcp
 local update_time   = ngx.update_time
 local mutex         = ngx.shared.mutex
 local state         = ngx.shared.state
-local strutil = require "strutil"
-local to_str = strutil.to_str
+
 
 local _M = {
     _VERSION = "0.11",
@@ -311,9 +310,8 @@ local heartbeat = {
                 return _M.STATUS_ERR, err
             end
 
-            --local status = tonumber(str_sub(status_line, from, to))
             local status = str_sub(status_line, from, to)
-            if statuses[status] ~= "true" then
+            if statuses[status] == false then
                 return _M.STATUS_ERR, "bad status code"
             end
         end

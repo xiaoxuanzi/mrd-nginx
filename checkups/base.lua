@@ -14,6 +14,10 @@ local tab_sort      = table.sort
 local tab_concat    = table.concat
 local tab_insert    = table.insert
 local unpack        = unpack
+local tostring      = tostring
+local ipairs        = ipairs
+local pairs         = pairs
+local type          = type
 
 local log           = ngx.log
 local ERR           = ngx.ERR
@@ -27,8 +31,7 @@ local mutex         = ngx.shared.mutex
 local state         = ngx.shared.state
 local shd_config    = ngx.shared.config
 local now           = ngx.now
-local strutil = require "strutil"
-local to_str = strutil.to_str
+
 
 local _M = {
     _VERSION = "0.20",
@@ -66,6 +69,7 @@ _M.cluster_status = cluster_status
 _M.is_tab = function(t) return type(t) == "table" end
 _M.is_str = function(t) return type(t) == "string" end
 _M.is_num = function(t) return type(t) == "number" end
+_M.is_nul = function(t) return t == nil or t == ngx.null end
 
 
 local function _gen_key(skey, srv)
@@ -109,9 +113,9 @@ function _M.set_srv_status(skey, srv, failed)
         server_status = {}
         cluster_status[skey] = server_status
     end
+
     -- The default max_fails is 0, which differs from nginx upstream module(1).
-    -- changed to 1
-    local max_fails = srv.max_fails or 1
+    local max_fails = srv.max_fails or 0
     local fail_timeout = srv.fail_timeout or 10
     if max_fails == 0 then  -- disables the accounting of attempts
         return
@@ -135,6 +139,7 @@ function _M.set_srv_status(skey, srv, failed)
 
     if failed then
         srv_status.failed_count = srv_status.failed_count + 1
+
         if srv_status.failed_count >= max_fails then
             local ups = upstream.checkups[skey]
             for level, cls in pairs(ups.cluster) do
@@ -159,7 +164,7 @@ function _M.check_res(res, check_opts)
 
         if typ == "http" and type(res) == "table"
         and res.status then
-            local status = tonumber(res.status)
+            local status = tostring(res.status)
             local http_opts = check_opts.http_opts
             if http_opts and http_opts.statuses and
                 http_opts.statuses[status] == false then
@@ -214,8 +219,8 @@ end
 
 function _M.get_peer_status(skey, srv)
     local peer_key = PEER_STATUS_PREFIX .. _gen_key(skey, srv)
-    local peer_status = cjson.decode(state:get(peer_key))
-    return peer_status
+    local peer_status = state:get(peer_key)
+    return not _M.is_nul(peer_status) and cjson.decode(peer_status) or nil
 end
 
 
@@ -232,10 +237,8 @@ function _M.get_upstream_status(skey)
         ups_status[level] = {}
         if servers and type(servers) == "table" and #servers > 0 then
             for _, srv in ipairs(servers) do
-                local peer_key = _gen_key(skey, srv)
-                local peer_status = cjson.decode(state:get(PEER_STATUS_PREFIX ..
-                                                           peer_key)) or {}
-                peer_status.server = peer_key
+                local peer_status = _M.get_peer_status(skey, srv) or {}
+                peer_status.server = _gen_key(skey, srv)
                 peer_status["weight"] = srv.weight
                 peer_status["max_fails"] = srv.max_fails
                 peer_status["fail_timeout"] = srv.fail_timeout

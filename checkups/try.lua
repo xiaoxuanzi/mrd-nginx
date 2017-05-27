@@ -9,6 +9,7 @@ local max        = math.max
 local sqrt       = math.sqrt
 local floor      = math.floor
 local tab_insert = table.insert
+local tostring   = tostring
 
 local update_time     = ngx.update_time
 local now             = ngx.now
@@ -20,30 +21,7 @@ local is_tab = base.is_tab
 local NEED_RETRY       = 0
 local REQUEST_SUCCESS  = 1
 local EXCESS_TRY_LIMIT = 2
-local strutil = require "strutil"
-local to_str = strutil.to_str
 
-local function extract_hash_value( hash_keys)
-
-    local hash_value
-    local uri_args = ngx.req.get_uri_args()
-
-    for _, v in pairs(hash_keys) do
-        local hvalue = uri_args[v]
-        if type(hvalue) == "table" then
-            hvalue = table.concat(hvalue, "")
-        end
-
-        if not hash_value then
-            hash_value = hvalue
-        else
-            hash_value = hash_value .. hvalue
-        end
-    end
-
-    return hash_value
-
-end
 
 local function prepare_callbacks(skey, opts)
     local ups = base.upstream.checkups[skey]
@@ -88,12 +66,7 @@ local function prepare_callbacks(skey, opts)
     local key
     if mode ~= nil then
         if mode == "hash" then
-            if ups.hash_key then
-                key = extract_hash_value( ups.hash_key )
-            else
-                key = ngx.var.uri
-            end
-
+            key = opts.hash_key or ngx.var.uri
         elseif mode == "url_hash" then
             key = ngx.var.uri
         elseif mode == "ip_hash" then
@@ -114,6 +87,12 @@ local function prepare_callbacks(skey, opts)
         if bad_servers[key] then
             return false
         end
+
+        if ups.enable == false or (ups.enable == nil
+            and base.upstream.default_heartbeat_enable == false) then
+            return base.get_srv_status(skey, srv) == base.STATUS_OK
+        end
+
         local peer_status = base.get_peer_status(skey, srv)
         if (not peer_status or peer_status.status ~= base.STATUS_ERR)
         and base.get_srv_status(skey, srv) == base.STATUS_OK then
@@ -131,7 +110,7 @@ local function prepare_callbacks(skey, opts)
     local try_limit = opts.try or ups.try or srvs_cnt
     local retry_cb = function(res)
         if is_tab(res) and res.status and is_tab(statuses) then
-            if statuses[res.status] ~= false then
+            if statuses[tostring(res.status)] ~= false then
                 return REQUEST_SUCCESS
             end
         elseif res then

@@ -115,7 +115,8 @@ function _M.set_srv_status(skey, srv, failed)
     end
 
     -- The default max_fails is 0, which differs from nginx upstream module(1).
-    local max_fails = srv.max_fails or 0
+    --local max_fails = srv.max_fails or 0
+    local max_fails = srv.max_fails or 1
     local fail_timeout = srv.fail_timeout or 10
     if max_fails == 0 then  -- disables the accounting of attempts
         return
